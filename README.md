@@ -1,1 +1,1 @@
-# veritas-
+# veritas
