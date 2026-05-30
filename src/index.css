@@ -1,0 +1,120 @@
+@import "tailwindcss";
+
+@variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: 'Outfit', sans-serif;
+  --font-serif: 'Playfair Display', serif;
+  
+  /* Primary Cream Theme */
+  --color-cream-50: #FCFAF7;
+  --color-cream-100: #F7F5F0;
+  --color-cream-200: #EDE9DF;
+  --color-cream-300: #DFD7C6;
+  --color-cream-400: #C2B49B;
+  --color-cream-500: #A29074;
+  --color-cream-900: #29241C;
+
+  /* Accent colors */
+  --color-accent-blue: #2B5C8F;
+  --color-accent-blue-hover: #1E466F;
+  --color-accent-green: #2E7D32;
+  --color-accent-red: #C62828;
+  --color-accent-gold: #B8860B;
+
+  /* Dark mode helpers */
+  --color-dark-border: #22252A;
+  --color-dark-text-secondary: #8E94A5;
+}
+
+@layer base {
+  html, body {
+    margin: 0;
+    padding: 0;
+    font-family: var(--font-sans);
+    transition: background-color 0.5s ease, color 0.5s ease;
+  }
+
+  body {
+    @apply bg-cream-100 text-cream-900;
+  }
+
+  .dark body {
+    @apply bg-[#0C0D0E] text-[#E8E7E3];
+  }
+
+  /* Transition for all theme elements */
+  *, *::before, *::after {
+    transition-property: background-color, border-color, color, fill, stroke, box-shadow;
+    transition-duration: 300ms;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: #2D3139;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb {
+  background: #E0DCD3;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #C8C2B5;
+}
+
+/* Keyframes for step loading anims */
+@keyframes pulseGlow {
+  0%, 100% {
+    opacity: 0.6;
+    box-shadow: 0 0 15px rgba(43, 92, 143, 0.15);
+  }
+  50% {
+    opacity: 1;
+    box-shadow: 0 0 25px rgba(43, 92, 143, 0.35);
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 2s infinite ease-in-out;
+}
+
+/* Glassmorphism Classes */
+.glass-panel-light {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(223, 215, 198, 0.5);
+}
+
+.glass-panel-dark {
+  background: rgba(20, 22, 26, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(45, 49, 57, 0.6);
+}
+
+/* Printing utilities for Report */
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .print-card {
+    border: 1px solid #ddd !important;
+    box-shadow: none !important;
+    background: white !important;
+    page-break-inside: avoid;
+  }
+}
