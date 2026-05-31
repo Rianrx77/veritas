@@ -10,6 +10,9 @@ export default function Footer() {
         <p className="text-2xs text-cream-400 dark:text-neutral-600">
           &copy; {new Date().getFullYear()} Veritas Research. Build-a-thon Submission.
         </p>
+        <p className="text-2xs text-cream-400/60 dark:text-neutral-700">
+          Built by Rian
+        </p>
       </div>
     </footer>
   );

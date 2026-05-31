@@ -187,6 +187,9 @@ function extractItemsFromJob(jobData: any): any[] {
   return [jobData];
 }
 
+// Session cache to avoid redundant Wire API calls for the same query
+const sessionCache = new Map<string, TopicData>();
+
 export class WireService {
   /**
    * Orchestrates the intelligent search flow:
@@ -196,20 +199,27 @@ export class WireService {
    * 4. Synthesizes an objective executive summary using the Local LLM.
    */
   static async orchestrateSearchQuery(query: string, config: LlmConfig): Promise<TopicData> {
+    // Check session cache first to save API credits
+    const cacheKey = `wire:${query.toLowerCase().trim()}`;
+    const cached = sessionCache.get(cacheKey);
+    if (cached) {
+      console.log(`[Orchestration] Cache hit for "${query}". Returning cached result.`);
+      return cached;
+    }
     console.log(`[Orchestration] Initiating two-step research flow for query: "${query}"`);
     
     // Step 1: Intent Classification via Local AI
     let category = 'GENERAL';
     try {
-      const classificationPrompt = `Categorize the following search query into one of these types: [FINANCE, TECH, POLITICS, GENERAL]. Query: '${query}'. Return ONLY the category word in uppercase.`;
+      const classificationPrompt = `Categorize the following search query into one of these types: [FINANCE, TECH, POLITICS, CAREERS, GENERAL]. Query: '${query}'. Return ONLY the category word in uppercase.`;
       const responseText = await callLocalLLM(classificationPrompt, config, true);
       const cleaned = responseText.trim().toUpperCase();
       
-      if (['FINANCE', 'TECH', 'POLITICS', 'GENERAL'].includes(cleaned)) {
+      if (['FINANCE', 'TECH', 'POLITICS', 'CAREERS', 'GENERAL'].includes(cleaned)) {
         category = cleaned;
       } else {
         // Look for keywords in LLM verbose response
-        for (const cat of ['FINANCE', 'TECH', 'POLITICS', 'GENERAL']) {
+        for (const cat of ['FINANCE', 'TECH', 'POLITICS', 'CAREERS', 'GENERAL']) {
           if (cleaned.includes(cat)) {
             category = cat;
             break;
@@ -220,7 +230,9 @@ export class WireService {
     } catch (e) {
       console.warn("[Orchestration] Local LLM classification failed, using keyword fallback:", e);
       const qLower = query.toLowerCase();
-      if (/stock|rate|fed|finance|val|valuation|market|gold|price|rbi|bank|revenue|funding|investment|wsj|cnbc/i.test(qLower)) {
+      if (/placed|placement|job|career|hiring|hire|salary|recruitment|engineer|college|student|university|intern|campus/i.test(qLower)) {
+        category = 'CAREERS';
+      } else if (/stock|rate|fed|finance|val|valuation|market|gold|price|rbi|bank|revenue|funding|investment|wsj|cnbc/i.test(qLower)) {
         category = 'FINANCE';
       } else if (/tech|claude|gpt|model|nvidia|ai|github|software|developer|silicon|semiconductor|chip|openai|reasoning|programming|code/i.test(qLower)) {
         category = 'TECH';
@@ -241,6 +253,8 @@ export class WireService {
       actionIds.add('hn_search');
     } else if (category === 'POLITICS') {
       actionIds.add('ap_search');
+      actionIds.add('re_search');
+    } else if (category === 'CAREERS') {
       actionIds.add('re_search');
     }
     const actionIdList = Array.from(actionIds);
@@ -356,7 +370,11 @@ export class WireService {
 
     // Step 4: Final Synthesis via Local LLM
     let summaryPoints: string[] = [];
-    let usedModel = "Local LLM Fallback";
+    let usedModel = config.provider === 'local' 
+      ? `Local LLM (${(config.localModel || 'llama3').toUpperCase()})` 
+      : config.provider === 'gemini' 
+        ? 'Gemini' 
+        : 'Mock Synthesis Engine';
 
     if (consolidatedResponses.length > 0) {
       try {
@@ -382,7 +400,7 @@ Example:
 Raw JSON Data:
 ${JSON.stringify(rawDataBlock).slice(0, 3000)}
 `;
-        usedModel = `Local LLM (${config.localModel})`;
+        usedModel = `Local LLM (${(config.localModel || 'llama3').toUpperCase()})`;
         const summaryText = await callLocalLLM(summaryPrompt, config, false);
         
         const jsonStart = summaryText.indexOf('[');
@@ -494,6 +512,10 @@ ${JSON.stringify(rawDataBlock).slice(0, 3000)}
     if (sourcesData.length > 0) {
       baseTopic.sources = sourcesData;
     }
+
+    // Cache the result to avoid redundant API calls on back-navigation
+    sessionCache.set(cacheKey, baseTopic);
+    console.log(`[Orchestration] Cached result for "${query}".`);
 
     return baseTopic;
   }
