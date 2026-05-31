@@ -177,7 +177,13 @@ export default function TopicDashboard() {
             {aiLoading ? (
               <div className="py-12 flex flex-col items-center justify-center space-y-2">
                 <RefreshCw className="w-6 h-6 animate-spin text-accent-blue" />
-                <p className="text-xs text-cream-500 dark:text-[#A0A5B5]">Gemini synthesizing web perspectives...</p>
+                <p className="text-xs text-cream-500 dark:text-[#A0A5B5]">
+                  {llmConfig.provider === 'local' 
+                    ? `${llmConfig.localModel ? `Local LLM (${llmConfig.localModel.toUpperCase()})` : 'Local LLM'} synthesizing web perspectives...` 
+                    : llmConfig.provider === 'gemini' 
+                      ? 'Gemini synthesizing web perspectives...' 
+                      : 'Mock Engine synthesizing web perspectives...'}
+                </p>
               </div>
             ) : (
               <ul className="space-y-3.5 py-2">

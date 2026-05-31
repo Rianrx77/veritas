@@ -628,8 +628,12 @@ export function generateMockTopic(query: string): TopicData {
   const getRandRange = (min: number, max: number) => min + Math.floor(rand() * (max - min));
   const chooseOne = <T>(arr: T[]): T => arr[Math.floor(rand() * arr.length)];
 
+  const qLower = key.toLowerCase();
+  const isCareerOrJob = /placed|placement|job|career|hiring|hire|salary|recruitment|engineer|college|student|university/i.test(qLower);
+  const isFinanceOrMarket = /stock|rate|fed|finance|market|crypto|coin|price|investment|revenue|funding/i.test(qLower);
+
   const categories = ["Technology", "Markets", "Policy", "Science", "Geopolitics"];
-  const category = chooseOne(categories);
+  const category = isCareerOrJob ? "Careers" : isFinanceOrMarket ? "Markets" : chooseOne(categories);
 
   const mediaSentiment = getRandRange(-20, 80);
   const publicSentiment = getRandRange(-60, 30);
@@ -680,12 +684,31 @@ export function generateMockTopic(query: string): TopicData {
     const plat = platforms[getRandRange(0, 3)];
     const sentiments: Array<'positive'|'neutral'|'negative'> = ['positive', 'neutral', 'negative'];
     const sent = sentiments[getRandRange(0, 3)];
-    const snippets = [
-      `I'm skeptical about the current timeline for ${title}. We've seen similar promises fail in previous cycles.`,
-      `This is honestly a game-changer. Integrated this into my workflow yesterday and it saves hours.`,
-      `Does anyone else feel like the media coverage on ${title} is completely ignoring the environmental impact?`,
-      `The cost structure is currently the biggest bottleneck. It's too expensive for smaller players to adopt.`
-    ];
+    
+    let snippets: string[] = [];
+    if (isCareerOrJob) {
+      snippets = [
+        `Honestly, with the current market slowdown, standard placements are tough. Need to focus on off-campus opportunities.`,
+        `If you have strong fundamentals in DSA, web development, and some internships, you will definitely get placed.`,
+        `Is anyone else seeing a decline in recruitment package offers on-campus compared to previous years?`,
+        `There is still a lot of demand for skilled software engineers. The industry is just correcting itself after the over-hiring boom.`
+      ];
+    } else if (isFinanceOrMarket) {
+      snippets = [
+        `The valuation looks pretty stretched at these levels. I'm expecting a short-term correction before any further breakout.`,
+        `Strong earnings reports and guidance are driving the bullish sentiment. Added more to my position today.`,
+        `Are people still buying this dip? Macro indicators (inflation, rate updates) make me a bit cautious right now.`,
+        `Highly positive long-term growth prospect. Market share is increasing and competitors are struggling to catch up.`
+      ];
+    } else {
+      snippets = [
+        `I'm skeptical about the current timeline for ${title}. We've seen similar promises fail in previous cycles.`,
+        `This is honestly a game-changer. Integrated this into my workflow yesterday and it saves hours.`,
+        `Does anyone else feel like the media coverage on ${title} is completely ignoring the environmental impact?`,
+        `The cost structure is currently the biggest bottleneck. It's too expensive for smaller players to adopt.`
+      ];
+    }
+
     return {
       id: `dyn-d-${i}`,
       platform: plat,
@@ -697,21 +720,41 @@ export function generateMockTopic(query: string): TopicData {
     };
   });
 
-  const generatedThemes: Array<{
+  let generatedThemes: Array<{
     name: string;
     mentions: number;
     sentiment: 'positive' | 'neutral' | 'negative';
     trend: 'up' | 'down' | 'stable';
-  }> = [
-    { name: `Cost & Resource Limits`, mentions: getRandRange(80, 300), sentiment: chooseOne(['negative', 'neutral']) as 'negative' | 'neutral', trend: 'up' as const },
-    { name: `Workflow Improvements`, mentions: getRandRange(100, 400), sentiment: 'positive' as const, trend: 'up' as const },
-    { name: `Regulatory Uncertainty`, mentions: getRandRange(50, 200), sentiment: 'negative' as const, trend: 'stable' as const },
-  ];
+  }> = [];
+
+  if (isCareerOrJob) {
+    generatedThemes = [
+      { name: `Placement Rates`, mentions: getRandRange(100, 300), sentiment: 'neutral', trend: 'stable' },
+      { name: `Skill Readiness (DSA/Dev)`, mentions: getRandRange(150, 450), sentiment: 'positive', trend: 'up' },
+      { name: `Market Slowdown & Off-Campus`, mentions: getRandRange(80, 250), sentiment: 'negative', trend: 'up' }
+    ];
+  } else if (isFinanceOrMarket) {
+    generatedThemes = [
+      { name: `Valuation & Multiples`, mentions: getRandRange(80, 250), sentiment: 'neutral', trend: 'stable' },
+      { name: `Earnings & Growth Guidance`, mentions: getRandRange(150, 400), sentiment: 'positive', trend: 'up' },
+      { name: `Macro & Rate Concerns`, mentions: getRandRange(50, 180), sentiment: 'negative', trend: 'stable' }
+    ];
+  } else {
+    generatedThemes = [
+      { name: `Cost & Resource Limits`, mentions: getRandRange(80, 300), sentiment: chooseOne(['negative', 'neutral']) as any, trend: 'up' },
+      { name: `Workflow Improvements`, mentions: getRandRange(100, 400), sentiment: 'positive', trend: 'up' },
+      { name: `Regulatory Uncertainty`, mentions: getRandRange(50, 200), sentiment: 'negative', trend: 'stable' }
+    ];
+  }
+
+  const defaultQuestion = (normalizedQuery.endsWith('?') || /^(will|is|can|should|does|how|why)/i.test(normalizedQuery))
+    ? normalizedQuery
+    : `Will ${title} achieve mainstream adoption metrics by Dec 31, 2026?`;
 
   const generatedPredictions = [
     {
       id: `dyn-p-1`,
-      question: `Will ${title} achieve mainstream adoption metrics by Dec 31, 2026?`,
+      question: defaultQuestion,
       yesProb: predictionConfidence,
       noProb: 100 - predictionConfidence,
       volume: `₹${getRandRange(20, 150)},000`,
@@ -728,14 +771,30 @@ export function generateMockTopic(query: string): TopicData {
   const generatedTimeline = [
     {
       date: "May 28, 2026",
-      title: `Critical Assessment on ${title}`,
-      description: `Detailed industry report outlines major potential and friction points for ${title}.`,
+      title: isCareerOrJob 
+        ? `Job Placement Assessment Published` 
+        : isFinanceOrMarket 
+          ? `Market Report Released` 
+          : `Critical Assessment on ${title}`,
+      description: isCareerOrJob 
+        ? `Detailed industry report outlines major employment and campus hiring trends for ${title}.` 
+        : isFinanceOrMarket 
+          ? `Detailed financial report outlines performance and sector dynamics.` 
+          : `Detailed industry report outlines major potential and friction points for ${title}.`,
       sourcesCount: getRandRange(3, 10)
     },
     {
       date: "May 15, 2026",
-      title: `Open-Source Code Repositories Gain Traction`,
-      description: `A collection of utility libraries simplifying integrations are pushed to public repositories.`,
+      title: isCareerOrJob 
+        ? `Recruiters Union Survey Published` 
+        : isFinanceOrMarket 
+          ? `Quarterly Sector Outlook Released` 
+          : `Open-Source Code Repositories Gain Traction`,
+      description: isCareerOrJob 
+        ? `A survey of major software firms outlines hiring expectations and entry-level packages.` 
+        : isFinanceOrMarket 
+          ? `Analyst forecasts outline potential risk factors and growth catalysts.` 
+          : `A collection of utility libraries simplifying integrations are pushed to public repositories.`,
       sourcesCount: getRandRange(2, 6)
     }
   ];
