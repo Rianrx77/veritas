@@ -208,6 +208,10 @@ export class WireService {
     }
     console.log(`[Orchestration] Initiating two-step research flow for query: "${query}"`);
     
+    // Simplify query for search API execution to get better hits
+    const searchKeywords = extractKeywordsFallback(query);
+    console.log(`[Orchestration] Original query: "${query}" -> Search Keywords: "${searchKeywords}"`);
+    
     // Step 1: Intent Classification via Local AI
     let category = 'GENERAL';
     try {
@@ -244,17 +248,16 @@ export class WireService {
       console.log(`[Orchestration] Keyword Classifier set category to: ${category}`);
     }
 
-    // Step 2: Dynamic Action IDs Selection
-    // Core: Google News is reliable. Reddit (rt_search) is disabled — Anakin's scraper
-    // consistently returns auth_expired errors for it, wasting credits and time.
-    const actionIds = new Set<string>(['gn_search']);
+    // Core: Google News (news) and Hacker News (discussions/opinions) are reliable.
+    // Reddit (rt_search) is disabled because Anakin's scraper consistently returns upstream 
+    // auth_expired errors for it. Hacker News provides rich, live conversational opinions.
+    const actionIds = new Set<string>(['gn_search', 'hn_search']);
     if (category === 'FINANCE') {
       actionIds.add('cn_search');
       actionIds.add('re_search');
       actionIds.add('ap_search');
     } else if (category === 'TECH') {
       actionIds.add('tc_search');
-      actionIds.add('hn_search');
       actionIds.add('re_search');
     } else if (category === 'POLITICS') {
       actionIds.add('ap_search');
@@ -277,7 +280,7 @@ export class WireService {
       try {
         const promises = actionIdList.map(async (actionId) => {
           try {
-            const data = await executeWireTaskAndPoll(actionId, query, config.wireApiKey || '');
+            const data = await executeWireTaskAndPoll(actionId, searchKeywords, config.wireApiKey || '');
             return { actionId, data, success: true };
           } catch (taskErr) {
             console.error(`[Orchestration] Action ID ${actionId} failed or timed out:`, taskErr);
@@ -335,16 +338,16 @@ export class WireService {
       // Filter and limit items
       items = items.filter(item => item && typeof item === 'object').slice(0, 5);
 
-      const isDiscussion = actionId.includes('reddit') || actionId.includes('rt_') || actionId.includes('github') || actionId.includes('forum');
+      const isDiscussion = actionId.includes('reddit') || actionId.includes('rt_') || actionId.includes('github') || actionId.includes('forum') || actionId.includes('hn_');
 
       if (isDiscussion) {
         items.forEach((item, itemIdx) => {
           const platform = actionId.includes('reddit') || actionId.includes('rt_') ? 'Reddit' : 'Forums';
           const author = item.author || item.user || item.owner || `user_${resIdx}_${itemIdx}`;
-          const content = item.content || item.body || item.text || item.title || item.description || `Discussions regarding ${query}`;
+          const content = item.title || item.content || item.body || item.text || item.description || `Discussions regarding ${query}`;
           const sentiment = item.sentiment || analyzeSentiment(content, '');
-          const engagement = item.engagement || item.score || item.stars || Math.floor(Math.random() * 100);
-          const url = item.url || item.link || `https://${platform.toLowerCase()}.com/post/${resIdx}_${itemIdx}`;
+          const engagement = item.points || item.score || item.engagement || item.stars || Math.floor(Math.random() * 100);
+          const url = item.hn_url || item.url || item.link || `https://${platform.toLowerCase()}.com/post/${resIdx}_${itemIdx}`;
 
           discussionsList.push({
             id: `wire-d-${resIdx}-${itemIdx}`,
@@ -547,3 +550,31 @@ ${JSON.stringify(rawDataBlock).slice(0, 3000)}
     return generateMockTopic(query);
   }
 }
+
+function extractKeywordsFallback(query: string): string {
+  let cleaned = query.replace(/[?.,!]/g, '').trim();
+  
+  if (cleaned.split(/\s+/).length <= 3) {
+    return cleaned;
+  }
+  
+  // Remove common question headers
+  cleaned = cleaned.replace(/^(is|why|what|how|are|does|should|can|will|do|did|could|would|where|when|who|which)\s+/i, '');
+  
+  const words = cleaned.split(/\s+/);
+  const stopWords = new Set([
+    'is', 'are', 'the', 'and', 'or', 'a', 'an', 'in', 'on', 'at', 'by', 'for', 'with', 
+    'about', 'against', 'of', 'to', 'from', 'into', 'this', 'that', 'these', 'those', 
+    'here', 'there', 'who', 'whom', 'whose', 'which', 'what', 'why', 'how', 'when', 
+    'where', 'widely', 'accepted', 'developers', 'others', 'era', 'do', 'does', 'did',
+    'should', 'would', 'could', 'can', 'will', 'any', 'some', 'many', 'much', 'more', 'most'
+  ]);
+  
+  const filtered = words.filter(w => !stopWords.has(w.toLowerCase()));
+  
+  if (filtered.length > 0) {
+    return filtered.slice(0, 3).join(' ');
+  }
+  return words.slice(0, 3).join(' ');
+}
+
