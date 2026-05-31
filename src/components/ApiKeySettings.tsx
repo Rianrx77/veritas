@@ -14,6 +14,7 @@ export default function ApiKeySettings({ isOpen, onClose }: ApiKeySettingsProps)
   const [apiKey, setApiKeyInput] = useState(llmConfig.apiKey);
   const [localEndpoint, setLocalEndpointInput] = useState(llmConfig.localEndpoint);
   const [localModel, setLocalModelInput] = useState(llmConfig.localModel);
+  const [wireApiKey, setWireApiKeyInput] = useState(llmConfig.wireApiKey || '');
   const [status, setStatus] = useState<'idle' | 'saved' | 'cleared'>('idle');
 
   if (!isOpen) return null;
@@ -24,7 +25,8 @@ export default function ApiKeySettings({ isOpen, onClose }: ApiKeySettingsProps)
       provider,
       apiKey: apiKey.trim(),
       localEndpoint: localEndpoint.trim(),
-      localModel: localModel.trim()
+      localModel: localModel.trim(),
+      wireApiKey: wireApiKey.trim()
     });
     setStatus('saved');
     setTimeout(() => {
@@ -38,11 +40,13 @@ export default function ApiKeySettings({ isOpen, onClose }: ApiKeySettingsProps)
     setApiKeyInput('');
     setLocalEndpointInput('http://localhost:11434/v1');
     setLocalModelInput('llama3');
+    setWireApiKeyInput('');
     setLlmConfig({
       provider: 'mock',
       apiKey: '',
       localEndpoint: 'http://localhost:11434/v1',
-      localModel: 'llama3'
+      localModel: 'llama3',
+      wireApiKey: ''
     });
     setStatus('cleared');
     setTimeout(() => {
@@ -119,6 +123,24 @@ export default function ApiKeySettings({ isOpen, onClose }: ApiKeySettingsProps)
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* Anakin Wire API Key */}
+            <div className="space-y-1.5 border-b border-cream-200 dark:border-dark-border pb-4">
+              <label htmlFor="wireApiKey" className="block text-xs font-semibold uppercase tracking-wider text-cream-500 dark:text-dark-text-secondary">
+                Anakin Wire API Key (Live Ingest)
+              </label>
+              <input
+                type="password"
+                id="wireApiKey"
+                value={wireApiKey}
+                onChange={(e) => setWireApiKeyInput(e.target.value)}
+                placeholder="ask_..."
+                className="w-full px-3 py-2.5 rounded-lg border border-cream-300 dark:border-dark-border bg-white dark:bg-[#181A1F] text-sm text-cream-900 dark:text-[#E8E7E3] placeholder-cream-400 focus:outline-none focus:ring-1 focus:ring-accent-blue"
+              />
+              <p className="text-3xs text-cream-400 dark:text-neutral-500 leading-relaxed mt-1">
+                Required for real-time media and discussion fetches. Stored locally in your browser.
+              </p>
             </div>
 
             {/* Provider Specific Settings */}

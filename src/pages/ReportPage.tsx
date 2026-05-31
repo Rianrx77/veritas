@@ -1,13 +1,15 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useContext } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { Printer, ArrowLeft, RefreshCw, FileText, Calendar, Database } from 'lucide-react';
 import { WireService } from '../services/wireService';
+import { ApiKeyContext } from '../App';
 import type { TopicData } from '../services/mockData';
 
 export default function ReportPage() {
   const { slug } = useParams<{ slug: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { llmConfig } = useContext(ApiKeyContext);
 
   const queryParam = searchParams.get('q');
   const query = queryParam || slug?.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') || 'Research Report';
@@ -19,7 +21,7 @@ export default function ReportPage() {
     async function loadData() {
       setLoading(true);
       try {
-        const data = await WireService.fetchTopicData(query);
+        const data = await WireService.fetchTopicData(query, llmConfig);
         setTopicData(data);
       } catch (err) {
         console.error(err);
@@ -28,7 +30,7 @@ export default function ReportPage() {
       }
     }
     loadData();
-  }, [query]);
+  }, [query, llmConfig]);
 
   const handlePrint = () => {
     window.print();

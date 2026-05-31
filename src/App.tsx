@@ -13,6 +13,7 @@ export interface LlmConfig {
   apiKey: string;
   localEndpoint: string;
   localModel: string;
+  wireApiKey?: string;
 }
 
 interface ApiKeyContextType {
@@ -33,6 +34,7 @@ export const ApiKeyContext = createContext<ApiKeyContextType>({
     apiKey: '',
     localEndpoint: 'http://localhost:11434/v1',
     localModel: 'llama3',
+    wireApiKey: '',
   },
   setLlmConfig: () => {},
 });
@@ -47,17 +49,27 @@ export function App() {
     const saved = localStorage.getItem('veritas_llm_config');
     if (saved) {
       try {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        // Ensure wireApiKey is present
+        if (parsed && typeof parsed === 'object') {
+          return {
+            wireApiKey: localStorage.getItem('veritas_wire_key') || '',
+            ...parsed
+          };
+        }
+        return parsed;
       } catch (e) {
         // Ignore error
       }
     }
     const legacyKey = localStorage.getItem('veritas_gemini_key') || '';
+    const legacyWireKey = localStorage.getItem('veritas_wire_key') || '';
     return {
       provider: legacyKey ? 'gemini' : 'mock',
       apiKey: legacyKey,
       localEndpoint: 'http://localhost:11434/v1',
       localModel: 'llama3',
+      wireApiKey: legacyWireKey,
     };
   });
 
@@ -69,6 +81,11 @@ export function App() {
     setLlmConfigState(config);
     localStorage.setItem('veritas_llm_config', JSON.stringify(config));
     localStorage.setItem('veritas_gemini_key', config.apiKey);
+    if (config.wireApiKey) {
+      localStorage.setItem('veritas_wire_key', config.wireApiKey);
+    } else {
+      localStorage.removeItem('veritas_wire_key');
+    }
   };
 
   const toggleTheme = () => {

@@ -39,7 +39,7 @@ export default function TopicDashboard() {
     async function loadData() {
       setLoading(true);
       try {
-        const data = await WireService.fetchTopicData(query);
+        const data = await WireService.fetchTopicData(query, llmConfig);
         if (active) {
           setTopicData(data);
           // Set default mock AI summary
@@ -86,10 +86,13 @@ export default function TopicDashboard() {
   };
 
   if (loading || !topicData) {
+    const isLive = llmConfig.wireApiKey && llmConfig.wireApiKey.trim().length > 0;
     return (
       <div className="flex-1 flex flex-col items-center justify-center py-20 space-y-4">
         <RefreshCw className="w-8 h-8 animate-spin text-accent-blue" />
-        <p className="text-sm text-cream-500 dark:text-dark-text-secondary">Resolving Wire schema feeds...</p>
+        <p className="text-sm text-cream-500 dark:text-dark-text-secondary">
+          {isLive ? 'Retrieving Live Intelligence from Anakin Wire...' : 'Resolving Wire schema feeds...'}
+        </p>
       </div>
     );
   }
