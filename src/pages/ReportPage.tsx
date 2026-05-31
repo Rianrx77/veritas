@@ -120,7 +120,7 @@ export default function ReportPage() {
           </h3>
           <div className="flex items-baseline space-x-2">
             <span className="text-3xl font-black text-cream-900 dark:text-[#E8E7E3]">{topicData.divergence.score}</span>
-            <span className="text-3xs text-cream-400 dark:text-neutral-500">/ 200 pts</span>
+            <span className="text-3xs text-cream-400 dark:text-neutral-500">/ 100 pts</span>
           </div>
           <div className="space-y-2 text-2xs">
             <div className="flex justify-between">

@@ -245,17 +245,28 @@ export class WireService {
     }
 
     // Step 2: Dynamic Action IDs Selection
-    const actionIds = new Set<string>(['gn_search', 'rt_search']);
+    // Core: Google News is reliable. Reddit (rt_search) is disabled — Anakin's scraper
+    // consistently returns auth_expired errors for it, wasting credits and time.
+    const actionIds = new Set<string>(['gn_search']);
     if (category === 'FINANCE') {
       actionIds.add('cn_search');
+      actionIds.add('re_search');
+      actionIds.add('ap_search');
     } else if (category === 'TECH') {
       actionIds.add('tc_search');
       actionIds.add('hn_search');
+      actionIds.add('re_search');
     } else if (category === 'POLITICS') {
       actionIds.add('ap_search');
       actionIds.add('re_search');
+      actionIds.add('cn_search');
     } else if (category === 'CAREERS') {
       actionIds.add('re_search');
+      actionIds.add('tc_search');
+    } else {
+      // GENERAL — broaden the net
+      actionIds.add('ap_search');
+      actionIds.add('tc_search');
     }
     const actionIdList = Array.from(actionIds);
     console.log(`[Orchestration] Routing search query to Anakin Wire APIs:`, actionIdList);
@@ -471,13 +482,14 @@ ${JSON.stringify(rawDataBlock).slice(0, 3000)}
     // Inject classification and category
     baseTopic.category = category.charAt(0) + category.slice(1).toLowerCase();
     
-    // Overwrite news and discussions if we fetched real data
+    // Overwrite news with live data; only keep mock if live returned nothing
     if (newsList.length > 0) {
-      baseTopic.news = [...newsList, ...baseTopic.news].slice(0, Math.max(newsList.length, 4));
+      baseTopic.news = newsList.slice(0, 8);
     }
     
+    // Only use live discussions if we got any; otherwise keep mock (which are now context-aware)
     if (discussionsList.length > 0) {
-      baseTopic.discussions = [...discussionsList, ...baseTopic.discussions].slice(0, Math.max(discussionsList.length, 4));
+      baseTopic.discussions = discussionsList.slice(0, 6);
     }
 
     baseTopic.summary = {

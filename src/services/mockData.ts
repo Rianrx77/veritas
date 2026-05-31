@@ -22,7 +22,7 @@ export interface TopicData {
   divergence: {
     mediaSentiment: number; // -100 to +100
     publicSentiment: number; // -100 to +100
-    score: number; // 0 to 200
+    score: number; // 0 to 100
     insight: string;
   };
   news: Array<{
@@ -637,7 +637,7 @@ export function generateMockTopic(query: string): TopicData {
 
   const mediaSentiment = getRandRange(-20, 80);
   const publicSentiment = getRandRange(-60, 30);
-  const score = Math.abs(mediaSentiment - publicSentiment);
+  const score = Math.min(100, Math.round(Math.abs(mediaSentiment - publicSentiment) / 2));
 
   const newsCount = getRandRange(20, 150);
   const predictionConfidence = getRandRange(30, 90);

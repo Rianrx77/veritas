@@ -226,7 +226,7 @@ export default function TopicDashboard() {
               <span className="text-5xl font-black text-cream-900 dark:text-[#E8E7E3]">
                 {topicData.divergence.score}
               </span>
-              <span className="text-xs text-cream-400 dark:text-neutral-500">/ 200 pts</span>
+              <span className="text-xs text-cream-400 dark:text-neutral-500">/ 100 pts</span>
             </div>
 
             {/* Sentiment Meter bars */}
