@@ -1,6 +1,6 @@
 # 🎯 **Veritas** – AI‑Powered Real‑Time News, Sentiment & Divergence Dashboard
 
-![Veritas Banner](https://raw.githubusercontent.com/Rianrx77/veritas/main/assets/banner.png)
+![Veritas Banner]([https://github.com/Rianrx77/veritas/blob/main/Veritas_banner_new.png))
 
 > “Seeing the whole story at a glance—media, public opinion, and market sentiment—so you can make decisions with confidence.”
 
@@ -50,7 +50,8 @@ Open <http://localhost:5173> and watch the magic happen!
 ---
 
 ## 📊 Architecture Overview
-```mermaid
+![Veritas Flow Diagram]([https://github.com/Rianrx77/veritas/blob/main/veritas_flow_diagram_new.png])
+```
 graph TD
     User[User Query] --> Frontend[React UI]
     Frontend --> LocalLLM[Local LLM (Intent + Summary)]
