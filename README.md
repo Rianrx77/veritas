@@ -50,7 +50,7 @@ Open <http://localhost:5173> and watch the magic happen!
 ---
 
 ## 📊 Architecture Overview
-![Veritas Flow Diagram]([https://github.com/Rianrx77/veritas/blob/main/veritas_flow_diagram_new.png])
+![Veritas Flow Diagram]([veritas_flow_diagram_new.png])
 ```
 graph TD
     User[User Query] --> Frontend[React UI]
