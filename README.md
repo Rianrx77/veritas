@@ -68,25 +68,5 @@ graph TD
 
 ---
 
-## 🎬 Demo Video
-A short walkthrough (3 min) is available on **YouTube**: https://youtu.be/placeholder-demo
-> The video covers the data pipeline, UI features, and the Divergence Score calculation.
-
----
-
-## 📣 Spread the Word
-- **X (Twitter)**: <https://x.com/anakinHQ> – tag `@anakinHQ`
-- **LinkedIn**: <https://www.linkedin.com/company/anakintech> – tag `@anakintech`
-- Use the hashtag **#VeritasAI** and **#Hackathon** when you share.
-
----
-
-## 🤝 Contributing
-We love contributors! Fork the repo, add a feature, and submit a PR. Please follow the **Conventional Commits** format.
-
----
-
-## 📜 License
-MIT © 2026 Rian Mathew & the Veritas Team
-
 Happy hacking! 🚀
+
