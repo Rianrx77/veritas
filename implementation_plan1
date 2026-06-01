@@ -1,0 +1,41 @@
+# Wire API Integration Plan
+
+The goal is to replace the deterministic mock data engine in `src/services/wireService.ts` with real HTTP network calls to the official Wire APIs, fulfilling the primary technical requirement for the hackathon submission.
+
+## User Review Required
+
+Please review this proposed architecture. To proceed with the actual code implementation, I need you to provide the official Wire API technical details (requested below) so I can correctly map the requests.
+
+## Open Questions
+
+> [!IMPORTANT]
+> **API Documentation Needed**
+> To write the connection logic, please provide the following details about the Wire API:
+> 1. **Endpoints**: What is the base URL and the specific endpoints for fetching the data? (e.g., `https://api.wire.com/v1/search`)
+> 2. **Authentication**: How do we pass the API key? (e.g., `Authorization: Bearer <YOUR_KEY>`, or a custom header like `x-api-key: <YOUR_KEY>`)
+> 3. **Payload Schema**: What parameters do we send in the request body/URL, and what exact JSON structure does the API return? *(If you have a `curl` command example or a sample JSON response provided by the hackathon organizers, please paste it!)*
+
+## Proposed Changes
+
+### Global State & Configuration
+#### [MODIFY] src/App.tsx
+- Update `ApiKeyContext` to include a new state variable: `wireApiKey`.
+- Persist this key in `localStorage` alongside the existing LLM configurations.
+
+#### [MODIFY] src/components/ApiKeySettings.tsx
+- Add a dedicated input field in the Developer Settings drawer for the user to securely enter their **Wire API Key**.
+
+### Service Layer Integration
+#### [MODIFY] src/services/wireService.ts
+- Deprecate and remove the `generateMockData` engine.
+- Implement an async `fetchWireData(query: string, apiKey: string)` function utilizing the native browser `fetch` API.
+- Create a data-mapping layer to transform Wire's raw JSON response into our application's internal `TopicData` TypeScript interface. This ensures the dashboard charts, metrics, and cards render seamlessly without requiring UI rewrites.
+- Implement error boundary handling to catch `401 Unauthorized` (missing key) or `429 Too Many Requests` (rate limits).
+
+## Verification Plan
+
+### Manual Verification
+1. Open the Developer Settings drawer and input the Wire API Key.
+2. Search for a new topic on the landing page.
+3. Use the browser's Network Developer Tools to confirm that a live `GET/POST` request is successfully routed to the official Wire endpoint.
+4. Verify that the "Inspect Wire API Ingest Payload" modal accurately reflects the true live data rather than the generated simulation.

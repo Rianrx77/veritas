@@ -1,0 +1,65 @@
+# Implementation Plan - Veritas Two-Step Local AI Search Ingestion
+
+This plan outlines the implementation of a two-step Local AI process in the Veritas dashboard. We will enable live querying of Anakin's Wire API, classify queries using a local LLM, fetch data in parallel, and generate the final executive summary.
+
+## User Review Required
+
+> [!IMPORTANT]
+> **Key Architecture Decisions:**
+> 1. **Local LLM Settings & Fallbacks:** The app expects Ollama to be running locally at `http://localhost:11434`. If Ollama is not active or fails to classify, we will fall back to a rule-based heuristic classification and use standard template content (or Gemini, if configured) to ensure the system remains resilient.
+> 2. **Anakin Wire API Integration:** We will execute `Promise.all` requests to `https://api.anakin.io/v1/wire/task` using the `X-API-Key` configured by the user. If the key is missing or the requests fail, we fall back to generating highly realistic mock data for the requested query.
+> 3. **Developer Settings Expansion:** We will add a new field to the "Developer Settings" drawer to store the "Anakin Wire API Key" securely in local storage.
+
+---
+
+## Proposed Changes
+
+### Configuration and State
+
+#### [MODIFY] [App.tsx](file:///d:/Rian/hackathons/build-a-thon/src/App.tsx)
+- Update `LlmConfig` interface to include `wireApiKey?: string`.
+- Update state initialization and setter functions to store and load `veritas_wire_key` from `localStorage`.
+
+#### [MODIFY] [ApiKeySettings.tsx](file:///d:/Rian/hackathons/build-a-thon/src/components/ApiKeySettings.tsx)
+- Add input field for `Anakin Wire API Key` to the settings drawer.
+- Sync state variables and saving/resetting logic for `wireApiKey`.
+
+---
+
+### Service Layer & Ingestion
+
+#### [MODIFY] [wireService.ts](file:///d:/Rian/hackathons/build-a-thon/src/services/wireService.ts)
+- Implement `orchestrateSearchQuery(query: string, config: LlmConfig)` method:
+  1. Call Local AI (`http://localhost:11434/api/generate`) to classify the query category. Fallback to keyword-based classification on failure.
+  2. Dynamically construct `action_id` list based on the category (e.g. `google_news.search`, `techcrunch.search`, etc.).
+  3. Execute `Promise.all` of `POST` requests to `https://api.anakin.io/v1/wire/task` using the `X-API-Key` header.
+  4. Parse response list and map news articles/discussions to `TopicData` structure.
+  5. Pass consolidated data back to Local AI to generate the Executive Summary bullet points.
+  6. Return the consolidated `TopicData` payload.
+- Update `fetchTopicData(query: string, config?: LlmConfig)` to call `orchestrateSearchQuery` when Live AI / Wire API key is configured.
+
+---
+
+### Dashboard and Pages
+
+#### [MODIFY] [TopicDashboard.tsx](file:///d:/Rian/hackathons/build-a-thon/src/pages/TopicDashboard.tsx)
+- Pass `llmConfig` parameter to `WireService.fetchTopicData(query, llmConfig)` inside `useEffect` loader.
+
+#### [MODIFY] [ReportPage.tsx](file:///d:/Rian/hackathons/build-a-thon/src/pages/ReportPage.tsx)
+- Import `ApiKeyContext` and pass `llmConfig` to `WireService.fetchTopicData(query, llmConfig)` inside `useEffect` loader.
+
+---
+
+## Verification Plan
+
+### Automated Verification
+- Run `npm run build` to verify zero TypeScript compile errors.
+
+### Manual Verification
+1. **Developer settings check:** Open the Settings Drawer, input a mock or real Anakin Wire API key, and verify it saves correctly.
+2. **Local AI Mock Test:** Start local Ollama, query "Nvidia", and verify the terminal/console shows:
+   - Categorization request to local AI
+   - Action IDs selection
+   - Parallel Wire API requests
+   - Final executive summary synthesis
+3. **Resilience Check:** Shut down Ollama and verify search continues to work gracefully using the heuristic categorizer and mock fallbacks.
